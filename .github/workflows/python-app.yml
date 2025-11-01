@@ -25,4 +25,5 @@ jobs:
         python-version: "3.10"
     - name: Run
       run: |
-        make run
+        python3 -m pip install -r requirements.txt
+        python3 main.py
