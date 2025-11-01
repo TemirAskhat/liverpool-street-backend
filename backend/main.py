@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Set
-
+import json
 import httpx
 from fastapi import FastAPI, File, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
@@ -314,9 +314,14 @@ async def upload_hero_image(file: UploadFile = File(...)) -> JSONResponse:
     print("file_id", file_id)
 
     payload = perfect.get_perfect_data(file_id)
+    data = json.loads(payload)
+    url = data["data"]["results"]["url"]
 
     return JSONResponse(
-        content=payload,
+        content={
+            "file_id": file_id,
+            "url": url
+        },
         status_code=status.HTTP_200_OK,
     )
 
