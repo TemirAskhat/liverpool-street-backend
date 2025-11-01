@@ -5,7 +5,7 @@ import json
 BASE_URL = "https://yce-api-01.perfectcorp.com/s2s/v2.0/task/skin-analysis"
 HEADERS = {
     "Content-Type": "application/json",
-    "Authorization": "Bearer sk-PqzWbE9NakYiOzQLN0OtHOGYVvAUw4wzIrj1igtjMWvPYbG9iZDqmNyG7-wU23EH",
+    "Authorization": "Bearer sk-8EmeNvoxMFSt4AcEEDKVgiVh7C7-0mkj4Epm8cqYFm_WxHBxJ8z6wHcPdj50kH_0",
 }
 
 DEFAULT_FILE_URL = "https://plugins-media.makeupar.com/smb/story/2025-10-22/caca1948-6fa2-49cc-9d37-ab4b55be9b66.png"
