@@ -1,0 +1,5 @@
+R2_ACCESS_KEY_ID = c43778cde3cc08f9c5f73f2d11283359
+R2_SECRET_KEY    = 303b6df736873266a88580fbcaad243394ca71fc790d15a5e98faee5615d3301
+R2_ENDPOINT      = https://351bacc284ced7d0f8d00526dd3cd89d.r2.cloudflarestorage.com
+R2_BUCKET        = skin
+R2_PUBLIC_BASE   = // I don't have the R2 public DNS right now

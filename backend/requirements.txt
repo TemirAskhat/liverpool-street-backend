@@ -1,3 +1,6 @@
 fastapi[standard]
 uvicorn
 requests
+boto3
+python-multipart
+pillow
