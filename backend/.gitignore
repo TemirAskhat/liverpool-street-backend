@@ -1,0 +1,4 @@
+.venv
+venv
+extracted_files
+__pycache__

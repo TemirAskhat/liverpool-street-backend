@@ -17,7 +17,10 @@ import httpx
 from fastapi import FastAPI, File, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 from PIL import Image, UnidentifiedImageError
+import s3
 
+import overlay
+import recommendations as recommendations
 
 app = FastAPI()
 
@@ -295,8 +298,6 @@ async def upload_hero_image(file: UploadFile = File(...)) -> JSONResponse:
     png_filename = f"{slug}.png"
 
     # Upload to PerfectCorp
-    # upload_result = await app.state.service.upload_image(png_filename, png_data)
-
     upload_url_data = perfect.upload_file(
         file_name=png_filename, file_size=len(png_data)
     )
@@ -317,20 +318,28 @@ async def upload_hero_image(file: UploadFile = File(...)) -> JSONResponse:
     data = json.loads(payload)
     url = data["data"]["results"]["url"]
 
-    # TODO: Comment during DEMO
+    print("url", url)
+
+    overlay_folder = s3.load_file_from_s3_url(file_id, url)
+
+    overlayed_data = overlay.overlay_multiple(
+        png_data, f"{overlay_folder}/skinanalysisResult"
+    )
+
+    openai_response = recommendations.get_recommendations(png_data, overlayed_data)
+
+    print("openai_response", openai_response)
+
     return JSONResponse(
         content={
             "file_id": "rovndWs7BQocFloquovDHKRnh1lq/GUxiuNbzC3071ULbKfeLEmuXUa9yH4wuc2K",
-            "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/387352418477671816/92409102910/v2/aeMNNB0KmUIP8rnQ996tC5Q/fd878e92-af45-4077-b0f7-d64a3c32be0f.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20251101T131148Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIARB77EV5Y5D7DAE3S%2F20251101%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=8128e09907e07fce12e72736830fe2a163c5f0b65ab33b8032b8381e9b327645"
+            "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/387352418477671816/92409102910/v2/aeMNNB0KmUIP8rnQ996tC5Q/fd878e92-af45-4077-b0f7-d64a3c32be0f.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20251101T131148Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIARB77EV5Y5D7DAE3S%2F20251101%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=8128e09907e07fce12e72736830fe2a163c5f0b65ab33b8032b8381e9b327645",
         },
         status_code=status.HTTP_200_OK,
     )
 
     return JSONResponse(
-        content={
-            "file_id": file_id,
-            "url": url
-        },
+        content={"file_id": file_id, "url": url},
         status_code=status.HTTP_200_OK,
     )
 
