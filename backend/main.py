@@ -395,7 +395,7 @@ async def upload_hero_image(file: UploadFile = File(...), file_id_param: Optiona
 #     # )
 #     file_ids_to_url[file_id] = url
 # >>>>>>> 5f9af06 ([backend] cache one file_id with url)
-
+    file_ids_to_url[file_id] = url
     return JSONResponse(
         content={"file_id": file_id, "url": url},
         status_code=status.HTTP_200_OK,
