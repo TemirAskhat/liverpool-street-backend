@@ -27,6 +27,9 @@ app = FastAPI()
 ROOT = Path(__file__).resolve().parent
 CFG_FILE = ROOT / "r2_config.txt"
 
+file_ids_to_url = {
+    "rovndWs7BQocFloquovDHKRnh1lq/GUxiuNbzC3071ULbKfeLEmuXUa9yH4wuc2K" : "https://yce-us.s3-accelerate.amazonaws.com/ttl30/387352418477671816/92409102910/v2/aeMNNB0KmUIP8rnQ996tC5Q/fd878e92-af45-4077-b0f7-d64a3c32be0f.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20251101T131148Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIARB77EV5Y5D7DAE3S%2F20251101%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=8128e09907e07fce12e72736830fe2a163c5f0b65ab33b8032b8381e9b327645"
+}
 
 # --------------------------------------------------------------------------- #
 #  Configuration
@@ -262,8 +265,11 @@ app = FastAPI(
 # --------------------------------------------------------------------------- #
 #  API Endpoints
 # --------------------------------------------------------------------------- #
+from typing import Optional
+from fastapi import Query
+
 @app.post("/upload/hero-image")
-async def upload_hero_image(file: UploadFile = File(...)) -> JSONResponse:
+async def upload_hero_image(file: UploadFile = File(...), file_id_param: Optional[str] = Query(None)) -> JSONResponse:
     """
     Upload an image, convert to PNG, and store in PerfectCorp.
 
@@ -273,70 +279,122 @@ async def upload_hero_image(file: UploadFile = File(...)) -> JSONResponse:
     Returns:
         JSON response with upload details and image URL
     """
-    # Validate filename
-    if not file.filename:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Filename is required",
+    if not file_id_param:
+        # Validate filename
+        if not file.filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Filename is required",
+            )
+
+        ImageProcessor.validate_filename(file.filename)
+
+        # Read and validate file size
+        contents = await file.read()
+        if len(contents) > ImageProcessor.MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File too large. Max size: {ImageProcessor.MAX_FILE_SIZE / 1024 / 1024}MB",
+            )
+
+        # Convert image to PNG
+        png_data = ImageProcessor.convert_to_png(contents)
+
+        # Generate filename
+        slug = Path(file.filename).stem
+        png_filename = f"{slug}.png"
+
+        # Upload to PerfectCorp
+        # upload_result = await app.state.service.upload_image(png_filename, png_data)
+
+        upload_url_data = perfect.upload_file(
+            file_name=png_filename, file_size=len(png_data)
         )
 
-    ImageProcessor.validate_filename(file.filename)
+        print("upload_url_data", upload_url_data)
 
-    # Read and validate file size
-    contents = await file.read()
-    if len(contents) > ImageProcessor.MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File too large. Max size: {ImageProcessor.MAX_FILE_SIZE / 1024 / 1024}MB",
+        file_id = upload_url_data["result"]["files"][0]["file_id"]
+        upload_url = upload_url_data["result"]["files"][0]["requests"][0]["url"]
+        headers = upload_url_data["result"]["files"][0]["requests"][0]["headers"]
+
+        perfect.upload_file_bytes(
+            file=png_data, presigned_url=upload_url, headers=headers
         )
+# <<<<<<< HEAD
 
-    # Convert image to PNG
-    png_data = ImageProcessor.convert_to_png(contents)
+#     # Convert image to PNG
+#     png_data = ImageProcessor.convert_to_png(contents)
 
-    # Generate filename
-    slug = Path(file.filename).stem
-    png_filename = f"{slug}.png"
+#     # Generate filename
+#     slug = Path(file.filename).stem
+#     png_filename = f"{slug}.png"
 
-    # Upload to PerfectCorp
-    upload_url_data = perfect.upload_file(
-        file_name=png_filename, file_size=len(png_data)
-    )
+#     # Upload to PerfectCorp
+#     upload_url_data = perfect.upload_file(
+#         file_name=png_filename, file_size=len(png_data)
+#     )
 
-    print("upload_url_data", upload_url_data)
+#     print("upload_url_data", upload_url_data)
 
-    file_id = upload_url_data["result"]["files"][0]["file_id"]
-    upload_url = upload_url_data["result"]["files"][0]["requests"][0]["url"]
-    headers = upload_url_data["result"]["files"][0]["requests"][0]["headers"]
+#     file_id = upload_url_data["result"]["files"][0]["file_id"]
+#     upload_url = upload_url_data["result"]["files"][0]["requests"][0]["url"]
+#     headers = upload_url_data["result"]["files"][0]["requests"][0]["headers"]
 
-    upload_image_request = perfect.upload_file_bytes(
-        file=png_data, presigned_url=upload_url, headers=headers
-    )
+#     upload_image_request = perfect.upload_file_bytes(
+#         file=png_data, presigned_url=upload_url, headers=headers
+#     )
 
+# =======
+    else:
+        file_id = file_id_param
+# >>>>>>> 5f9af06 ([backend] cache one file_id with url)
     print("file_id", file_id)
+
+    if file_id in file_ids_to_url:
+        url = file_ids_to_url[file_id]
+        return JSONResponse(
+            content={
+                "file_id": file_id,
+                "url": url
+            },
+            status_code=status.HTTP_200_OK,
+        )
 
     payload = perfect.get_perfect_data(file_id)
     data = json.loads(payload)
     url = data["data"]["results"]["url"]
 
-    print("url", url)
+# <<<<<<< HEAD
+#     print("url", url)
 
-    overlay_folder = s3.load_file_from_s3_url(file_id, url)
+#     overlay_folder = s3.load_file_from_s3_url(file_id, url)
 
-    overlayed_data = overlay.overlay_multiple(
-        png_data, f"{overlay_folder}/skinanalysisResult"
-    )
+#     overlayed_data = overlay.overlay_multiple(
+#         png_data, f"{overlay_folder}/skinanalysisResult"
+#     )
 
-    openai_response = recommendations.get_recommendations(png_data, overlayed_data)
+#     openai_response = recommendations.get_recommendations(png_data, overlayed_data)
 
-    print("openai_response", openai_response)
+#     print("openai_response", openai_response)
 
-    return JSONResponse(
-        content={
-            "file_id": "rovndWs7BQocFloquovDHKRnh1lq/GUxiuNbzC3071ULbKfeLEmuXUa9yH4wuc2K",
-            "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/387352418477671816/92409102910/v2/aeMNNB0KmUIP8rnQ996tC5Q/fd878e92-af45-4077-b0f7-d64a3c32be0f.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20251101T131148Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIARB77EV5Y5D7DAE3S%2F20251101%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=8128e09907e07fce12e72736830fe2a163c5f0b65ab33b8032b8381e9b327645",
-        },
-        status_code=status.HTTP_200_OK,
-    )
+#     return JSONResponse(
+#         content={
+#             "file_id": "rovndWs7BQocFloquovDHKRnh1lq/GUxiuNbzC3071ULbKfeLEmuXUa9yH4wuc2K",
+#             "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/387352418477671816/92409102910/v2/aeMNNB0KmUIP8rnQ996tC5Q/fd878e92-af45-4077-b0f7-d64a3c32be0f.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20251101T131148Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIARB77EV5Y5D7DAE3S%2F20251101%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=8128e09907e07fce12e72736830fe2a163c5f0b65ab33b8032b8381e9b327645",
+#         },
+#         status_code=status.HTTP_200_OK,
+#     )
+# =======
+#     # # TODO: Comment during DEMO
+#     # return JSONResponse(
+#     #     content={
+#     #         "file_id": "rovndWs7BQocFloquovDHKRnh1lq/GUxiuNbzC3071ULbKfeLEmuXUa9yH4wuc2K",
+#     #         "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/387352418477671816/92409102910/v2/aeMNNB0KmUIP8rnQ996tC5Q/fd878e92-af45-4077-b0f7-d64a3c32be0f.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20251101T131148Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIARB77EV5Y5D7DAE3S%2F20251101%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=8128e09907e07fce12e72736830fe2a163c5f0b65ab33b8032b8381e9b327645"
+#     #     },
+#     #     status_code=status.HTTP_200_OK,
+#     # )
+#     file_ids_to_url[file_id] = url
+# >>>>>>> 5f9af06 ([backend] cache one file_id with url)
 
     return JSONResponse(
         content={"file_id": file_id, "url": url},
