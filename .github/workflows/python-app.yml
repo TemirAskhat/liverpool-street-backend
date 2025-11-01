@@ -23,8 +23,10 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: "3.10"
+    - name: Set python venv
+      run: python3 -m venv ./backend/.venv
     - name: Install dependencies
-      run: python3 -m pip install -r ./backend/requirements.txt
+      run: ./backend/.venv/bin/python3 -m pip install -r ./backend/requirements.txt
 
   run:
     runs-on: ubuntu-latest
@@ -36,4 +38,4 @@ jobs:
       with:
         python-version: "3.10"
     - name: Run application
-      run: python3 ./backend/main.py
+      run: ./backend/.venv/bin/python3 ./backend/main.py
