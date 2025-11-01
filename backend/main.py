@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 FastAPI handler to receive image uploads and send them to Cloudflare R2.
 Converts images to PNG format before uploading.
@@ -16,7 +15,6 @@ import boto3
 from botocore.config import Config
 from PIL import Image
 import io
-
 
 app = FastAPI()
 
@@ -182,7 +180,27 @@ async def health_check():
     return {"status": "ok", "bucket": CFG["R2_BUCKET"]}
 
 
-if __name__ == "__main__":
-    import uvicorn
+@app.get("/test")
+async def test_route():
+    data = perfect.get_perfect_data()
+    return JSONResponse(
+        content={
+            "message": "Got perfect payload",
+            "payload": data,
+        },
+        status_code=200
+    )
 
+@app.get("/test2")
+async def test_route2():
+    data = perfect.upload_file()
+    return JSONResponse(
+        content={
+            "message": "Got perfect payload",
+            "payload": data,
+        },
+        status_code=200
+    )
+
+if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
