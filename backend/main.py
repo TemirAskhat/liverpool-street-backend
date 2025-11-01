@@ -337,9 +337,9 @@ async def upload_hero_image(
     print("file_id", file_id)
 
     if file_id in file_ids_to_url:
+        url = file_ids_to_url[file_id]
         print(f"[upload_hero_image] file_id: {file_id}")
         print(f"[upload_hero_image] url: {url}")
-        url = file_ids_to_url[file_id]
         return JSONResponse(
             content={"file_id": file_id, "url": url},
             status_code=status.HTTP_200_OK,
