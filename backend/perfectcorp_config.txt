@@ -1,0 +1,11 @@
+# PerfectCorp API Configuration
+# You can also set these as environment variables (they take precedence)
+
+# Required: Your PerfectCorp API key
+PERFECTCORP_API_KEY=sk-PqzWbE9NakYiOzQLN0OtHOGYVvAUw4wzIrj1igtjMWvPYbG9iZDqmNyG7-wU23EH	
+
+# Required: PerfectCorp API endpoint for image uploads
+PERFECTCORP_ENDPOINT=https://api.perfectcorp.com/v1/images/upload
+
+# Optional: Request timeout in seconds (default: 30)
+PERFECTCORP_TIMEOUT=30
