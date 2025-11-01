@@ -48,9 +48,9 @@ def upload_file(file_name="MyFaceAkezhan.png", content_type="image/png", file_si
     print("[perfect][upload_file] Upload successful")
     return data
 
-def start_task(src_file_url = DEFAULT_FILE_URL, dst_actions = DEFAULT_DCT_ACTIONS):
+def start_task(src_file_id, dst_actions = DEFAULT_DCT_ACTIONS):
   data = {
-  "src_file_url": DEFAULT_FILE_URL,
+  "src_file_id": src_file_id,
   "dst_actions": dst_actions
 }
   resp = requests.request("POST", BASE_URL, headers=HEADERS, json=data)
@@ -73,9 +73,9 @@ def poll_task(task_id):
     status = payload.get('data', {}).get('task_status')
     return payload
 
-def get_perfect_data(src_file_url=DEFAULT_FILE_URL, dst_actions=DEFAULT_DCT_ACTIONS):
+def get_perfect_data(src_file_id, dst_actions=DEFAULT_DCT_ACTIONS):
   try:
-    task_id = start_task(src_file_url, dst_actions)
+    task_id = start_task(src_file_id, dst_actions)
     final = poll_task(task_id)
     return json.dumps(final, indent=2)
   except Exception as e:

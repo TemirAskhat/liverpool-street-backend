@@ -184,7 +184,7 @@ async def health_check():
 
 @app.get("/test")
 async def test_route():
-    data = perfect.get_perfect_data()
+    data = perfect.get_perfect_data("test_file_id")
     return JSONResponse(
         content={
             "message": "Got perfect payload",
