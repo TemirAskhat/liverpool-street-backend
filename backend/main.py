@@ -8,6 +8,8 @@ import sys
 import pathlib
 import tempfile
 from typing import Dict
+import uvicorn
+import perfect
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
@@ -203,4 +205,4 @@ async def test_route2():
     )
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
