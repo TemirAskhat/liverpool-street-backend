@@ -122,5 +122,3 @@ def overlay_multiple(base_image_data, overlay_folder):
         composer.overlay_image(overlay, position=(0, 0))
 
     composer.save(f"{overlay_folder}/overlayed.png")
-
-    return composer.to_bytes()

@@ -20,7 +20,7 @@ from PIL import Image, UnidentifiedImageError
 import s3
 
 import overlay
-import recommendations as recommendations
+import recommendations_file
 
 app = FastAPI()
 
@@ -28,8 +28,9 @@ ROOT = Path(__file__).resolve().parent
 CFG_FILE = ROOT / "r2_config.txt"
 
 file_ids_to_url = {
-    "rovndWs7BQocFloquovDHKRnh1lq/GUxiuNbzC3071ULbKfeLEmuXUa9yH4wuc2K" : "https://yce-us.s3-accelerate.amazonaws.com/ttl30/387352418477671816/92409102910/v2/aeMNNB0KmUIP8rnQ996tC5Q/fd878e92-af45-4077-b0f7-d64a3c32be0f.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20251101T131148Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIARB77EV5Y5D7DAE3S%2F20251101%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=8128e09907e07fce12e72736830fe2a163c5f0b65ab33b8032b8381e9b327645"
+    "rovndWs7BQocFloquovDHKRnh1lq/GUxiuNbzC3071ULbKfeLEmuXUa9yH4wuc2K": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/387352418477671816/92409102910/v2/aeMNNB0KmUIP8rnQ996tC5Q/fd878e92-af45-4077-b0f7-d64a3c32be0f.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20251101T131148Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIARB77EV5Y5D7DAE3S%2F20251101%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=8128e09907e07fce12e72736830fe2a163c5f0b65ab33b8032b8381e9b327645"
 }
+
 
 # --------------------------------------------------------------------------- #
 #  Configuration
@@ -268,8 +269,11 @@ app = FastAPI(
 from typing import Optional
 from fastapi import Query
 
+
 @app.post("/upload/hero-image")
-async def upload_hero_image(file: UploadFile = File(...), file_id_param: Optional[str] = Query(None)) -> JSONResponse:
+async def upload_hero_image(
+    file: UploadFile = File(...), file_id_param: Optional[str] = Query(None)
+) -> JSONResponse:
     """
     Upload an image, convert to PNG, and store in PerfectCorp.
 
@@ -320,34 +324,16 @@ async def upload_hero_image(file: UploadFile = File(...), file_id_param: Optiona
         perfect.upload_file_bytes(
             file=png_data, presigned_url=upload_url, headers=headers
         )
-# <<<<<<< HEAD
 
-#     # Convert image to PNG
-#     png_data = ImageProcessor.convert_to_png(contents)
+        directory = f"extracted_files/{file_id}/skinanalysisResult"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
-#     # Generate filename
-#     slug = Path(file.filename).stem
-#     png_filename = f"{slug}.png"
-
-#     # Upload to PerfectCorp
-#     upload_url_data = perfect.upload_file(
-#         file_name=png_filename, file_size=len(png_data)
-#     )
-
-#     print("upload_url_data", upload_url_data)
-
-#     file_id = upload_url_data["result"]["files"][0]["file_id"]
-#     upload_url = upload_url_data["result"]["files"][0]["requests"][0]["url"]
-#     headers = upload_url_data["result"]["files"][0]["requests"][0]["headers"]
-
-#     upload_image_request = perfect.upload_file_bytes(
-#         file=png_data, presigned_url=upload_url, headers=headers
-#     )
-
-# =======
+        with open(f"{directory}/original.png", "wb") as f:
+            f.write(png_data)
     else:
         file_id = file_id_param
-# >>>>>>> 5f9af06 ([backend] cache one file_id with url)
+
     print("file_id", file_id)
 
     if file_id in file_ids_to_url:
@@ -355,10 +341,7 @@ async def upload_hero_image(file: UploadFile = File(...), file_id_param: Optiona
         print(f"[upload_hero_image] url: {url}")
         url = file_ids_to_url[file_id]
         return JSONResponse(
-            content={
-                "file_id": file_id,
-                "url": url
-            },
+            content={"file_id": file_id, "url": url},
             status_code=status.HTTP_200_OK,
         )
 
@@ -366,37 +349,11 @@ async def upload_hero_image(file: UploadFile = File(...), file_id_param: Optiona
     data = json.loads(payload)
     url = data["data"]["results"]["url"]
 
-# <<<<<<< HEAD
-#     print("url", url)
+    overlay_folder = s3.load_file_from_s3_url(file_id, url)
+    overlay_folder += "/skinanalysisResult"
 
-#     overlay_folder = s3.load_file_from_s3_url(file_id, url)
+    overlay.overlay_multiple(png_data, overlay_folder)
 
-#     overlayed_data = overlay.overlay_multiple(
-#         png_data, f"{overlay_folder}/skinanalysisResult"
-#     )
-
-#     openai_response = recommendations.get_recommendations(png_data, overlayed_data)
-
-#     print("openai_response", openai_response)
-
-#     return JSONResponse(
-#         content={
-#             "file_id": "rovndWs7BQocFloquovDHKRnh1lq/GUxiuNbzC3071ULbKfeLEmuXUa9yH4wuc2K",
-#             "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/387352418477671816/92409102910/v2/aeMNNB0KmUIP8rnQ996tC5Q/fd878e92-af45-4077-b0f7-d64a3c32be0f.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20251101T131148Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIARB77EV5Y5D7DAE3S%2F20251101%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=8128e09907e07fce12e72736830fe2a163c5f0b65ab33b8032b8381e9b327645",
-#         },
-#         status_code=status.HTTP_200_OK,
-#     )
-# =======
-#     # # TODO: Comment during DEMO
-#     # return JSONResponse(
-#     #     content={
-#     #         "file_id": "rovndWs7BQocFloquovDHKRnh1lq/GUxiuNbzC3071ULbKfeLEmuXUa9yH4wuc2K",
-#     #         "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/387352418477671816/92409102910/v2/aeMNNB0KmUIP8rnQ996tC5Q/fd878e92-af45-4077-b0f7-d64a3c32be0f.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20251101T131148Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIARB77EV5Y5D7DAE3S%2F20251101%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=8128e09907e07fce12e72736830fe2a163c5f0b65ab33b8032b8381e9b327645"
-#     #     },
-#     #     status_code=status.HTTP_200_OK,
-#     # )
-#     file_ids_to_url[file_id] = url
-# >>>>>>> 5f9af06 ([backend] cache one file_id with url)
     print(f"[upload_hero_image] file_id: {file_id}")
     print(f"[upload_hero_image] url: {url}")
     file_ids_to_url[file_id] = url
@@ -404,6 +361,21 @@ async def upload_hero_image(file: UploadFile = File(...), file_id_param: Optiona
         content={"file_id": file_id, "url": url},
         status_code=status.HTTP_200_OK,
     )
+
+
+@app.get("/recommendations")
+async def recommendations(file_id: str):
+    print("file_id", file_id)
+    overlay_folder = f"extracted_files/{file_id}/skinanalysisResult"
+
+    with open(f"{overlay_folder}/original.png", "rb") as f:
+        png_data = f.read()
+
+    with open(f"{overlay_folder}/overlayed.png", "rb") as f:
+        overlayed_data = f.read()
+
+    openai_response = recommendations_file.get_recommendations(png_data, overlayed_data)
+    return openai_response
 
 
 @app.get("/health")

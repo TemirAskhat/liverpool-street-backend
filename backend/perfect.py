@@ -87,11 +87,15 @@ def poll_task(task_id, attemps=10):
             raise RuntimeError(f"Polling failed: {resp.status_code} {resp.reason}")
         last_payload = resp.json() if resp.content else {}
         status = last_payload.get("data", {}).get("task_status")
-        if (status == "running"):
+        if status == "running":
             time.sleep(2)
             continue
         return last_payload
-    raise RuntimeError("[perfect][polltask] No success status, latest payload" + json.dumps(last_payload))
+    raise RuntimeError(
+        "[perfect][polltask] No success status, latest payload"
+        + json.dumps(last_payload)
+    )
+
 
 def get_perfect_data(src_file_id, dst_actions=DEFAULT_DCT_ACTIONS):
     try:
