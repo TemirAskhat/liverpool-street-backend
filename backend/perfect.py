@@ -77,16 +77,21 @@ def start_task(src_file_id, dst_actions=DEFAULT_DCT_ACTIONS):
     return task_id
 
 
-def poll_task(task_id):
-    poll_url = f"{BASE_URL}/{task_id}"
-    print(f"[perfect][poll_task] Making polling request on {poll_url}")
-    resp = requests.get(poll_url, headers=HEADERS)
-    if not resp.ok:
-        raise RuntimeError(f"Polling failed: {resp.status_code} {resp.reason}")
-    payload = resp.json() if resp.content else {}
-    status = payload.get("data", {}).get("task_status")
-    return payload
-
+def poll_task(task_id, attemps=10):
+    last_payload = None
+    for _ in range(attemps):
+        poll_url = f"{BASE_URL}/{task_id}"
+        print(f"[perfect][poll_task] Making polling request on {poll_url}")
+        resp = requests.get(poll_url, headers=HEADERS)
+        if not resp.ok:
+            raise RuntimeError(f"Polling failed: {resp.status_code} {resp.reason}")
+        last_payload = resp.json() if resp.content else {}
+        status = last_payload.get("data", {}).get("task_status")
+        if (status == "running"):
+            time.sleep(2)
+            continue
+        return last_payload
+    raise RuntimeError("[perfect][polltask] No success status, latest payload" + json.dumps(last_payload))
 
 def get_perfect_data(src_file_id, dst_actions=DEFAULT_DCT_ACTIONS):
     try:
