@@ -317,6 +317,15 @@ async def upload_hero_image(file: UploadFile = File(...)) -> JSONResponse:
     data = json.loads(payload)
     url = data["data"]["results"]["url"]
 
+    # TODO: Comment during DEMO
+    return JSONResponse(
+        content={
+            "file_id": "rovndWs7BQocFloquovDHKRnh1lq/GUxiuNbzC3071ULbKfeLEmuXUa9yH4wuc2K",
+            "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/387352418477671816/92409102910/v2/aeMNNB0KmUIP8rnQ996tC5Q/fd878e92-af45-4077-b0f7-d64a3c32be0f.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20251101T131148Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIARB77EV5Y5D7DAE3S%2F20251101%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=8128e09907e07fce12e72736830fe2a163c5f0b65ab33b8032b8381e9b327645"
+        },
+        status_code=status.HTTP_200_OK,
+    )
+
     return JSONResponse(
         content={
             "file_id": file_id,
