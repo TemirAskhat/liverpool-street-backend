@@ -351,6 +351,8 @@ async def upload_hero_image(file: UploadFile = File(...), file_id_param: Optiona
     print("file_id", file_id)
 
     if file_id in file_ids_to_url:
+        print(f"[upload_hero_image] file_id: {file_id}")
+        print(f"[upload_hero_image] url: {url}")
         url = file_ids_to_url[file_id]
         return JSONResponse(
             content={
@@ -395,6 +397,8 @@ async def upload_hero_image(file: UploadFile = File(...), file_id_param: Optiona
 #     # )
 #     file_ids_to_url[file_id] = url
 # >>>>>>> 5f9af06 ([backend] cache one file_id with url)
+    print(f"[upload_hero_image] file_id: {file_id}")
+    print(f"[upload_hero_image] url: {url}")
     file_ids_to_url[file_id] = url
     return JSONResponse(
         content={"file_id": file_id, "url": url},
