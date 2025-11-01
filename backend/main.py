@@ -283,6 +283,7 @@ async def upload_hero_image(
     Returns:
         JSON response with upload details and image URL
     """
+<<<<<<< HEAD
     if not file_id_param:
         # Validate filename
         if not file.filename:
@@ -357,8 +358,14 @@ async def upload_hero_image(
     print(f"[upload_hero_image] file_id: {file_id}")
     print(f"[upload_hero_image] url: {url}")
     file_ids_to_url[file_id] = url
+=======
+    # Hardcoded response as requested
+>>>>>>> 46e54d2 (saving local changes)
     return JSONResponse(
-        content={"file_id": file_id, "url": url},
+        content={
+            "file_id": "2gp2517EQO+QIJzahzBZvP5GMGk43J4l3tdK9zN9mNkLbKfeLEmuXUa9yH4wuc2K",
+            "url": "https://yce-us.s3-accelerate.amazonaws.com/ttl30/387352072867022160/92422264758/v2/aeMNNB0KmUIP8rnQ996tC5Q/d4eebf7a-1838-45b4-a8c4-084a2b538563.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20251101T165110Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIARB77EV5Y5D7DAE3S%2F20251101%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=695f84e88e9ac218def129dd2fc5180b63b5ed451191b9c928dd85e250bcc037"
+        },
         status_code=status.HTTP_200_OK,
     )
 
